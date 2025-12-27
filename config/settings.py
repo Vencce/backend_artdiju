@@ -1,10 +1,13 @@
 from pathlib import Path
 import os
 
+# Caminho base do projeto
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SEGURANÇA: Tenta pegar a chave do Render, senão usa a insegura (apenas para dev local)
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me-in-production')
 
+# SEGURANÇA: Debug só é True se NÃO estivermos no Render
 DEBUG = 'RENDER' not in os.environ
 
 ALLOWED_HOSTS = []
@@ -13,28 +16,32 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 INSTALLED_APPS = [
+    # Apps de terceiros (Cloudinary deve vir antes dos apps do Django)
     'cloudinary_storage',
     'cloudinary',
+    
+    # Apps padrão do Django
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    
+    # Outros Apps
     'rest_framework',
     'corsheaders',
-    'core',
+    'core', # Seu app principal
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',         # MANTENHA ESTE (Topo)
+    'corsheaders.middleware.CorsMiddleware',         # 1. CORS (Sempre no topo)
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',    # Essencial para os estilos
+    'whitenoise.middleware.WhiteNoiseMiddleware',    # 2. WhiteNoise (Essencial para o CSS)
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    # 'corsheaders.middleware.CorsMiddleware',       <-- REMOVI A DUPLICATA AQUI
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -57,14 +64,9 @@ TEMPLATES = [
     },
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
-
 WSGI_APPLICATION = 'config.wsgi.application'
 
+# Configuração de Banco de Dados (SQLite padrão)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -72,6 +74,7 @@ DATABASES = {
     }
 }
 
+# Validação de Senhas
 AUTH_PASSWORD_VALIDATORS = [
     { 'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator', },
     { 'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator', },
@@ -79,30 +82,49 @@ AUTH_PASSWORD_VALIDATORS = [
     { 'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator', },
 ]
 
+# Configuração de Autenticação (JWT)
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+# Internacionalização
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
-# --- CORREÇÃO PRINCIPAL AQUI ---
-STATIC_URL = '/static/'  # Adicionei a barra no início
+# --- ARQUIVOS ESTÁTICOS E MÍDIA (CONFIGURAÇÃO DJANGO 5) ---
+
+STATIC_URL = '/static/'  # Correção: Barra no início é obrigatória
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Configuração Moderna de Armazenamento (STORAGES)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
-CORS_ALLOWED_ORIGINS = [
-    "https://artdiju.vercel.app",
-    "http://localhost:5173",
-]
-
+# Configuração do Cloudinary (Credenciais)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- CORS (Quem pode acessar a API) ---
+
+CORS_ALLOWED_ORIGINS = [
+    "https://artdiju.vercel.app",  # Seu Frontend
+    "http://localhost:5173",       # Teste Local
+]
