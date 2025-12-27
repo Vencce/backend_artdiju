@@ -109,14 +109,14 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # MUDANÇA AQUI: Removemos o 'Manifest' para evitar o erro de arquivo faltando
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
     },
 }
 
-# --- COMPATIBILIDADE (FIX PARA O ERRO) ---
-# O django-cloudinary-storage ainda procura essas variáveis antigas e quebra se não achar.
-# Mantemos elas apontando para o mesmo lugar para satisfazer a biblioteca.
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# --- COMPATIBILIDADE ---
+# Ajustamos aqui também para bater com a configuração acima
+STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # Configuração do Cloudinary
